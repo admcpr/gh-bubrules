@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"gh-hubbub/messages"
-	"gh-hubbub/structs"
-	"gh-hubbub/style"
+	"gh-bubrls/messages"
+	"gh-bubrls/structs"
+	"gh-bubrls/style"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"

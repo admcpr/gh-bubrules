@@ -2,12 +2,25 @@ package main
 
 import (
 	"fmt"
+	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/go-gh/v2/pkg/api"
 )
 
+var MainModel []tea.Model
+
 func main() {
-	fmt.Println("hi world, this is the gh-bubrls extension!")
+	MainModel = []tea.Model{NewUserModel()}
+
+	p := tea.NewProgram(MainModel[0])
+
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Yeah that didn't work, because: %v", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Oh hi, this is the gh-bubrls extension!")
 	client, err := api.DefaultRESTClient()
 	if err != nil {
 		fmt.Println(err)
