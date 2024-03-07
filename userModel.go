@@ -13,19 +13,17 @@ import (
 )
 
 type UserModel struct {
-	Authenticating bool
-	Authenticated  bool
-	User           structs.User
-	SelectedOrgUrl string
-	list           list.Model
-	loaded         bool
-	width          int
-	height         int
+	UnAuthenticated bool
+	User            structs.User
+	SelectedOrgUrl  string
+	list            list.Model
+	loaded          bool
+	width           int
+	height          int
 }
 
 func NewUserModel() UserModel {
 	return UserModel{
-		Authenticating: true,
 		list: list.New(
 			[]list.Item{},
 			list.NewDefaultDelegate(),
@@ -36,6 +34,7 @@ func NewUserModel() UserModel {
 }
 
 func (m UserModel) Init() tea.Cmd {
+	m.User
 	return getOrganisations
 }
 
@@ -56,8 +55,7 @@ func (m UserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case messages.AuthenticationErrorMsg:
-		m.Authenticating = false
-		m.Authenticated = false
+		m.UnAuthenticated = true
 		return m, nil
 
 	case messages.OrgListMsg:
@@ -85,11 +83,8 @@ func (m UserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m UserModel) View() string {
-	if !m.Authenticating && !m.Authenticated {
+	if m.UnAuthenticated {
 		return fmt.Sprintln("You are not authenticated try running `gh auth login`. Press q to quit.")
-	}
-	if m.Authenticating {
-		return "Authenticating with github ..."
 	}
 
 	return style.App.Render(m.list.View())
