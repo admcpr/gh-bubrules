@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"reflect"
@@ -23,8 +23,8 @@ func TestUserModel_Update(t *testing.T) {
 		wantCmd   tea.Cmd
 	}{
 		// TODO: Add test cases.
-		{"Authentication Success", UserModel{}, args{messages.AuthenticationMsg{User: testUser}}, UserModel{Authenticated: true, User: testUser}, getOrganisations},
-		{"Authentication Failure", UserModel{}, args{messages.AuthenticationErrorMsg{}}, UserModel{Authenticated: false}, nil},
+		{"Authentication Success", UserModel{}, args{messages.AuthenticationMsg{User: testUser}}, UserModel{User: testUser}, getOrganisations},
+		{"Authentication Failure", UserModel{}, args{messages.AuthenticationErrorMsg{}}, UserModel{}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -12,6 +12,7 @@ require (
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/charmbracelet/harmonica v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect

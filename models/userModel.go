@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"fmt"
@@ -34,7 +34,6 @@ func NewUserModel() UserModel {
 }
 
 func (m UserModel) Init() tea.Cmd {
-	m.User
 	return getOrganisations
 }
 
@@ -59,21 +58,23 @@ func (m UserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case messages.OrgListMsg:
-		m.list = buildOrgListModel(msg.Organisations, m.width, m.height, m.User)
+		m.list = NewOrgListModel(msg.Organisations, m.width, m.height, m.User)
 		return m, nil
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
+		case "q", "ctrl+c":
 			return m, tea.Quit
-			// case "enter", " ":
-			// 	MainModel[consts.UserModelName] = m
-			// 	item := m.list.SelectedItem()
-			// 	orgModel := NewOrgModel(item.(structs.ListItem).Title(), m.width, m.height)
+		case "enter", " ":
 
-			// 	MainModel[consts.OrganisationModelName] = orgModel
+			// MainModel[consts.UserModelName] = m
+			// item := m.list.SelectedItem()
+			// orgModel := NewOrgModel(item.(structs.ListItem).Title(), m.width, m.height)
 
-			// 	return orgModel, orgModel.GetRepositories
+			// MainModel[consts.OrganisationModelName] = orgModel
+
+			orgModel := NewOrgModel()
+			return orgModel, orgModel.Init()
 		}
 	}
 
@@ -88,22 +89,6 @@ func (m UserModel) View() string {
 	}
 
 	return style.App.Render(m.list.View())
-}
-
-func buildOrgListModel(organisations []structs.Organisation, width, height int, user structs.User) list.Model {
-	items := make([]list.Item, len(organisations))
-	for i, org := range organisations {
-		items[i] = structs.NewListItem(org.Login, org.Url)
-	}
-
-	list := list.New(items, style.DefaultDelegate, width, height-2)
-
-	list.Title = "User: " + user.Name
-	list.SetStatusBarItemName("Organisation", "Organisations")
-	list.Styles.Title = style.Title
-	list.SetShowTitle(true)
-
-	return list
 }
 
 func getOrganisations() tea.Msg {

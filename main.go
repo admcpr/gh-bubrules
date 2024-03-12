@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gh-bubrls/models"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,7 +11,7 @@ import (
 var MainModel []tea.Model
 
 func main() {
-	MainModel = []tea.Model{NewUserModel()}
+	MainModel = []tea.Model{models.NewUserModel()}
 
 	p := tea.NewProgram(MainModel[0])
 
