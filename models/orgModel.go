@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cli/go-gh/v2/pkg/api"
 )
 
 const (
@@ -29,7 +30,8 @@ func NewOrgModel() OrgModel {
 }
 
 func (m OrgModel) Init() tea.Cmd {
-	return tickCmd()
+	return tea.Batch(tickCmd())
+
 }
 
 func (m OrgModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -70,6 +72,19 @@ func (m OrgModel) View() string {
 	return "\n" +
 		pad + m.progress.View() + "\n\n" +
 		pad + helpStyle("Press any key to quit")
+}
+
+func getRepos(login string) tea.Cmd {
+	client, err := api.DefaultGraphQLClient()
+	if err != nil {
+		return func() tea.Msg {
+			return err
+		}
+	}
+
+	return func() tea.Msg {
+		return nil
+	}
 }
 
 func tickCmd() tea.Cmd {
