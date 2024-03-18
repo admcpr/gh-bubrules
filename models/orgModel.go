@@ -79,8 +79,9 @@ func (m OrgModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case repoQueryMsg:
 		m.repos = append(m.repos, msg.Repository)
+		cmd := m.progress.IncrPercent(0.9 / float64(m.repoCount))
 
-		return m, tickCmd()
+		return m, cmd
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
@@ -103,43 +104,41 @@ func (m OrgModel) View() string {
 }
 
 func getRepo(owner string, name string) tea.Cmd {
-	client, err := api.DefaultGraphQLClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-	repoQuery := structs.RepositoryQuery{}
-
-	variables := map[string]interface{}{
-		"owner": graphql.String(owner),
-		"name":  graphql.String(name),
-	}
-	err = client.Query("Repository", &repoQuery, variables)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return func() tea.Msg {
+		client, err := api.DefaultGraphQLClient()
+		if err != nil {
+			log.Fatal(err)
+		}
+		repoQuery := structs.RepositoryQuery{}
+
+		variables := map[string]interface{}{
+			"owner": graphql.String(owner),
+			"name":  graphql.String(name),
+		}
+		err = client.Query("Repository", &repoQuery, variables)
+		if err != nil {
+			log.Fatal(err)
+		}
 		return repoQueryMsg(repoQuery)
 	}
 }
 
 func getRepos(login string) tea.Cmd {
-	client, err := api.DefaultGraphQLClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-	organizationQuery := structs.OrganizationQuery{}
-
-	variables := map[string]interface{}{
-		"login": graphql.String(login),
-		"first": graphql.Int(100),
-	}
-	err = client.Query("OrganizationRepositories", &organizationQuery, variables)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return func() tea.Msg {
+		client, err := api.DefaultGraphQLClient()
+		if err != nil {
+			log.Fatal(err)
+		}
+		organizationQuery := structs.OrganizationQuery{}
+
+		variables := map[string]interface{}{
+			"login": graphql.String(login),
+			"first": graphql.Int(100),
+		}
+		err = client.Query("OrganizationRepositories", &organizationQuery, variables)
+		if err != nil {
+			log.Fatal(err)
+		}
 		return orgQueryMsg(organizationQuery)
 	}
 }
