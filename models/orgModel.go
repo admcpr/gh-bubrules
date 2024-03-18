@@ -1,6 +1,9 @@
 package models
 
 import (
+	"fmt"
+	"gh-bubrls/structs"
+	"log"
 	"strings"
 	"time"
 
@@ -8,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cli/go-gh/v2/pkg/api"
+	graphql "github.com/cli/shurcooL-graphql"
 )
 
 const (
@@ -18,19 +22,27 @@ const (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 type tickMsg time.Time
+type orgQueryMsg structs.OrganizationQuery
+type repoQueryMsg structs.RepositoryQuery
 
 type OrgModel struct {
-	progress progress.Model
+	progress  progress.Model
+	login     string
+	repoCount int
+	repos     []structs.Repository
 }
 
-func NewOrgModel() OrgModel {
+func NewOrgModel(login string) OrgModel {
 	orgModel := OrgModel{}
+	orgModel.login = login
+	orgModel.repoCount = 0
+	orgModel.repos = []structs.Repository{}
 	orgModel.progress = progress.New(progress.WithDefaultGradient())
 	return orgModel
 }
 
 func (m OrgModel) Init() tea.Cmd {
-	return tea.Batch(tickCmd())
+	return tea.Batch(tickCmd(), getRepos(m.login))
 
 }
 
@@ -53,8 +65,22 @@ func (m OrgModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Note that you can also use progress.Model.SetPercent to set the
 		// percentage value explicitly, too.
-		cmd := m.progress.SetPercent(0.25)
+		cmd := m.progress.IncrPercent(0.01)
 		return m, tea.Batch(tickCmd(), cmd)
+
+	case orgQueryMsg:
+		repos := msg.Organization.Repositories.Edges
+		cmds := []tea.Cmd{m.progress.SetPercent(0.1)}
+		m.repoCount = len(msg.Organization.Repositories.Edges)
+		for _, repo := range repos {
+			cmds = append(cmds, getRepo(m.login, repo.Node.Name))
+		}
+		return m, tea.Batch(cmds...)
+
+	case repoQueryMsg:
+		m.repos = append(m.repos, msg.Repository)
+
+		return m, tickCmd()
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
@@ -69,21 +95,52 @@ func (m OrgModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m OrgModel) View() string {
 	pad := strings.Repeat(" ", padding)
-	return "\n" +
-		pad + m.progress.View() + "\n\n" +
-		pad + helpStyle("Press any key to quit")
+	progress := "\n" + pad + m.progress.View() + "\n\n" + pad + "Getting repositories ... "
+	if m.repoCount < 1 {
+		return progress
+	}
+	return progress + fmt.Sprintf("%d of %d", len(m.repos), m.repoCount)
+}
+
+func getRepo(owner string, name string) tea.Cmd {
+	client, err := api.DefaultGraphQLClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	repoQuery := structs.RepositoryQuery{}
+
+	variables := map[string]interface{}{
+		"owner": graphql.String(owner),
+		"name":  graphql.String(name),
+	}
+	err = client.Query("Repository", &repoQuery, variables)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func() tea.Msg {
+		return repoQueryMsg(repoQuery)
+	}
 }
 
 func getRepos(login string) tea.Cmd {
 	client, err := api.DefaultGraphQLClient()
 	if err != nil {
-		return func() tea.Msg {
-			return err
-		}
+		log.Fatal(err)
+	}
+	organizationQuery := structs.OrganizationQuery{}
+
+	variables := map[string]interface{}{
+		"login": graphql.String(login),
+		"first": graphql.Int(100),
+	}
+	err = client.Query("OrganizationRepositories", &organizationQuery, variables)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return func() tea.Msg {
-		return nil
+		return orgQueryMsg(organizationQuery)
 	}
 }
 

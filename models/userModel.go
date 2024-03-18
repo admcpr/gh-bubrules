@@ -66,14 +66,13 @@ func (m UserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "enter", " ":
-
 			// MainModel[consts.UserModelName] = m
 			// item := m.list.SelectedItem()
 			// orgModel := NewOrgModel(item.(structs.ListItem).Title(), m.width, m.height)
-
 			// MainModel[consts.OrganisationModelName] = orgModel
 
-			orgModel := NewOrgModel()
+			item := m.list.SelectedItem()
+			orgModel := NewOrgModel(item.(structs.ListItem).Title())
 			return orgModel, orgModel.Init()
 		}
 	}
