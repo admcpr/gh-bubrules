@@ -3,9 +3,11 @@ package models
 import (
 	"fmt"
 	"gh-bubrls/structs"
+	"gh-bubrls/style"
 	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/go-gh/v2/pkg/api"
@@ -25,14 +27,17 @@ type OrgModel struct {
 	login     string
 	repoCount int
 	repos     []structs.Repository
+	list      list.Model
 }
 
 func NewOrgModel(login string) OrgModel {
-	orgModel := OrgModel{}
-	orgModel.login = login
-	orgModel.repoCount = 0
-	orgModel.repos = []structs.Repository{}
-	orgModel.progress = progress.New(progress.WithDefaultGradient())
+	orgModel := OrgModel{
+		list:      list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		login:     login,
+		repoCount: 0,
+		repos:     []structs.Repository{},
+		progress:  progress.New(progress.WithDefaultGradient()),
+	}
 	return orgModel
 }
 
@@ -83,6 +88,11 @@ func (m OrgModel) View() string {
 		return m.ProgressView()
 	}
 
+	for idx, repo := range m.repos {
+		m.list.InsertItem(idx, structs.NewListItem(repo.Name, repo.Url))
+	}
+
+	return style.App.Render(m.list.View())
 }
 
 func (m OrgModel) ProgressView() string {
